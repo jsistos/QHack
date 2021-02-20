@@ -7,14 +7,11 @@ import sys
 def simple_circuits_30(angle):
     """The code you write for this challenge should be completely contained within this function
         between the # QHACK # comment markers.
-
     In this function:
         * Rotate a qubit around the y-axis by angle
         * Measure the expectation value of `PauliX`
-
     Args:
         angle (float): how much to rotate a state around the y-axis
-
     Returns:
         float: the expectation value of a PauliX measurement
     """
@@ -23,11 +20,17 @@ def simple_circuits_30(angle):
     # QHACK #
 
     # Step 1 : initialize a device
+    num_wires = 2
+    dev = qml.device('default.qubit', wires = num_wires)
 
     # Step 2 : Create a quantum circuit and qnode
+    @qml.qnode(dev)
+    def y_rotation(theta):
+        qml.RY(theta, wires=0)
 
+        return qml.expval(qml.PauliX(0))
     # Step 3 : Run the qnode
-    # x_expectation = ?
+    x_expectation = y_rotation(angle)
 
     # QHACK #
     return x_expectation

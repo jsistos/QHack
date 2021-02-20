@@ -7,14 +7,11 @@ import sys
 def simple_circuits_20(angle):
     """The code you write for this challenge should be completely contained within this function
     between the # QHACK # comment markers.
-
     In this function:
         * Rotate the qubit around the x-axis by angle
         * Measure the probability the qubit is in the zero state
-
     Args:
         angle (float): how much to rotate a state around the x-axis
-
     Returns:
         float: the probability of of the state being in the 0 ground state
     """
@@ -22,11 +19,20 @@ def simple_circuits_20(angle):
     # QHACK #
 
     # Step 1 : initalize a device
+    num_wires = 1
+    dev = qml.device('default.qubit', wires = num_wires)
 
     # Step 2 : Create a quantum circuit and qnode
+    @qml.qnode(dev)
+    def rotation(angle):
+        qml.RX(angle, wires = 0)
+        return qml.probs(wires = 0)
+    
+
+    #qml.draw(rotation(angle))
 
     # Step 3 : Run the qnode
-    # prob = ?
+    prob = rotation(angle)[0]
 
     # QHACK #
     return prob
