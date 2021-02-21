@@ -46,6 +46,55 @@ def gradient_200(weights, dev):
     hessian = np.zeros([5, 5], dtype=np.float64)
 
     # QHACK #
+    # Execute unshifted circuit
+    unshifted = circuit(weights)
+
+    def parameter_shift_double(qnode, params, posI, posJ):
+        shifted = params.copy()
+
+        shifted[posI] += np.pi / 2
+        shifted[posJ] += np.pi / 2
+        fForward = qnode(shifted)
+
+        shifted[posI] -= np.pi
+        iBackward = qnode(shifted)
+
+        shifted[posJ] -= np.pi
+        fBackward = qnode(shifted)
+
+        shifted[posI] += np.pi
+        jBackward = qnode(shifted)
+
+        return 0.25 * ((fForward + fBackward) - (iBackward + jBackward))
+
+    def parameter_shift_squared(qnode, params, pos):
+        shifted = params.copy()
+
+        shifted[pos] += np.pi / 2
+        forward = qnode(shifted)
+
+        shifted[pos] -= np.pi
+        backward = qnode(shifted)
+
+        return [0.5 * (forward + backward - 2*unshifted), 0.5 * (forward - backward)]
+
+    # Hessian diagonal partial d2f / dx2
+    for i in range(5):
+        #Shift parameter method
+        partialDiffSquared = parameter_shift_squared(circuit, weights, i)
+        hessian[i][i] = partialDiffSquared[0]
+        
+        #Use values to calculate partial gradient df / dx
+        gradient[i] = partialDiffSquared[1]
+    
+    # Hessian fill non diagonal partial d2f / dxdy
+    for i in range(5):
+        for j in range(i):
+            #Shift-paramater method
+            partialDiffDouble = parameter_shift_double(circuit, weights, i, j)
+            hessian[i][j] = partialDiffDouble
+            hessian[j][i] = partialDiffDouble
+
 
     # QHACK #
 
