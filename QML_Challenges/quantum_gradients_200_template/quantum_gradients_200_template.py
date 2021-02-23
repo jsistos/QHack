@@ -46,9 +46,10 @@ def gradient_200(weights, dev):
     hessian = np.zeros([5, 5], dtype=np.float64)
 
     # QHACK #
-    # Execute unshifted circuit
+    # Execute unshifted circuit for later use
     unshifted = circuit(weights)
 
+    #Obtain partial derivative didj with an angle of pi/2
     def parameter_shift_double(qnode, params, posI, posJ):
         shifted = params.copy()
 
@@ -65,8 +66,11 @@ def gradient_200(weights, dev):
         shifted[posI] += np.pi
         jBackward = qnode(shifted)
 
+        #Formula is obtained from applying partial derivative formula twice and s = pi/2
         return 0.25 * ((fForward + fBackward) - (iBackward + jBackward))
 
+    #Obtain partial derivative dx2 with an angle of pi/4. Useful to reuse hessian results
+    # in gradient vector later
     def parameter_shift_squared(qnode, params, pos):
         shifted = params.copy()
 
@@ -76,22 +80,27 @@ def gradient_200(weights, dev):
         shifted[pos] -= np.pi
         backward = qnode(shifted)
 
+        #Formula is obtained from partial derivative twice and s = pi/4. Note the unshifted used here
         return [0.5 * (forward + backward - 2*unshifted), 0.5 * (forward - backward)]
 
     # Hessian diagonal partial d2f / dx2
     for i in range(5):
-        #Shift parameter method
+        #Shift parameter method. Save to variable to avoid executing twice
         partialDiffSquared = parameter_shift_squared(circuit, weights, i)
+
+        #Extract hessian value from execution
         hessian[i][i] = partialDiffSquared[0]
         
-        #Use values to calculate partial gradient df / dx
+        #Extract gradient value from execution
         gradient[i] = partialDiffSquared[1]
     
     # Hessian fill non diagonal partial d2f / dxdy
     for i in range(5):
         for j in range(i):
-            #Shift-paramater method
+            #Shift parameter method. Save to variable to avoid executing twice
             partialDiffDouble = parameter_shift_double(circuit, weights, i, j)
+
+            #Assign result to (i, j) and (j, i). They're equal because of the symmetry
             hessian[i][j] = partialDiffDouble
             hessian[j][i] = partialDiffDouble
 
